@@ -1,7 +1,7 @@
 # 🧪 Laboratório: Testes Unitários e TDD com C# e XUnit
 
 > **Disciplina:** Qualidade de Software  
-> **Duração estimada:** 2h30  
+> **Duração estimada:** 2h  
 > **Pré-requisitos:** Conta no GitHub, noções básicas de C#
 
 ---
@@ -13,11 +13,10 @@
 3. [Revisão Teórica — TDD](#-revisão-teórica--tdd)
 4. [Preparação do Ambiente](#%EF%B8%8F-preparação-do-ambiente)
 5. [Estrutura do Repositório](#-estrutura-do-repositório)
-6. [Parte 1 — Exemplo Guiado: Calculadora](#-parte-1--exemplo-guiado-calculadora)
-7. [Parte 2 — Prática TDD: Calculadora](#-parte-2--prática-tdd-calculadora)
-8. [Parte 3 — Exercício Autônomo: Conta Bancária](#-parte-3--exercício-autônomo-conta-bancária)
-9. [Referência Rápida — XUnit](#-referência-rápida--xunit)
-10. [Entregáveis](#-entregáveis)
+6. [Parte 1 — Exemplo Guiado: Construtor da Conta Bancária](#-parte-1--exemplo-guiado-construtor-da-conta-bancária)
+7. [Parte 2 — Exercício: Crie os Demais Testes](#-parte-2--exercício-crie-os-demais-testes)
+8. [Referência Rápida — XUnit](#-referência-rápida--xunit)
+9. [Entregáveis](#-entregáveis)
 
 ---
 
@@ -66,16 +65,15 @@ Assert   →  Verificar se o resultado é o esperado
 
 ```csharp
 [Fact]
-public void Somar_DoisPositivos_RetornaSoma()
+public void Construtor_DadosValidos_CriaContaCorretamente()
 {
-    // Arrange — preparar
-    var calc = new CalculadoraService();
+    // Arrange & Act
+    var conta = new Conta("Maria", 100);
 
-    // Act — agir
-    var resultado = calc.Somar(2, 3);
-
-    // Assert — verificar
-    Assert.Equal(5, resultado);
+    // Assert
+    Assert.Equal("Maria", conta.Titular);
+    Assert.Equal(100, conta.Saldo);
+    Assert.True(conta.Ativa);
 }
 ```
 
@@ -91,9 +89,9 @@ public void Somar_DoisPositivos_RetornaSoma()
 Usaremos o padrão **`Método_Cenário_ResultadoEsperado`**:
 
 ```
-Somar_DoisPositivos_RetornaSoma
-Dividir_PorZero_LancaExcecao
-EhPar_NumeroImpar_RetornaFalse
+Construtor_DadosValidos_CriaContaCorretamente
+Depositar_ValorNegativo_LancaArgumentException
+Sacar_SaldoInsuficiente_LancaInvalidOperationException
 ```
 
 Isso torna os relatórios de teste autoexplicativos.
@@ -204,11 +202,11 @@ Você também pode executar testes pelo terminal:
 # Executar todos os testes
 dotnet test
 
-# Executar testes de um projeto específico
-dotnet test tests/Calculadora.Tests
-
 # Executar com mais detalhes
 dotnet test --verbosity normal
+
+# Filtrar por nome
+dotnet test --filter "NomeDoTeste"
 ```
 
 ---
@@ -222,19 +220,13 @@ tdd-xunit-csharp/
 ├── .vscode/
 │   └── extensions.json            ← Extensões recomendadas
 ├── src/
-│   ├── Calculadora/
-│   │   ├── Calculadora.csproj     ← Projeto da biblioteca
-│   │   └── CalculadoraService.cs  ← Classe com métodos a implementar
 │   └── ContaBancaria/
 │       ├── ContaBancaria.csproj   ← Projeto da biblioteca
-│       └── Conta.cs               ← Classe para exercício autônomo
+│       └── Conta.cs               ← Classe de produção (construtor implementado)
 ├── tests/
-│   ├── Calculadora.Tests/
-│   │   ├── Calculadora.Tests.csproj
-│   │   └── CalculadoraServiceTests.cs  ← Testes (parcialmente prontos)
 │   └── ContaBancaria.Tests/
 │       ├── ContaBancaria.Tests.csproj
-│       └── ContaTests.cs               ← Testes (você escreverá tudo)
+│       └── ContaTests.cs          ← Testes (exemplo do construtor + você escreverá o restante)
 ├── TddXUnit.sln                   ← Solution file
 ├── .gitignore
 └── README.md                      ← Este roteiro
@@ -242,126 +234,103 @@ tdd-xunit-csharp/
 
 ---
 
-## 🟢 Parte 1 — Exemplo Guiado: Calculadora
+## 🟢 Parte 1 — Exemplo Guiado: Construtor da Conta Bancária
 
-> **Objetivo:** Entender a estrutura de um teste unitário com XUnit.
+> **Objetivo:** Entender a estrutura de um teste unitário com XUnit e o ciclo TDD, usando o construtor da classe `Conta` como exemplo completo.
 
-### 1.1 Analisar o código existente
+### 1.1 Analisar o código de produção
 
-Abra o arquivo `src/Calculadora/CalculadoraService.cs` e observe que o método `Somar` já está implementado.
+Abra o arquivo `src/ContaBancaria/Conta.cs` e observe o **construtor** da classe `Conta`. Ele já está implementado com as seguintes regras:
 
-Agora abra `tests/Calculadora.Tests/CalculadoraServiceTests.cs` e analise os testes prontos para `Somar`:
+- O **titular** não pode ser nulo ou vazio (lança `ArgumentException`).
+- O **saldo inicial** não pode ser negativo (lança `ArgumentException`).
+- A conta é criada como **ativa**.
 
-- **`Somar_DoisPositivos_RetornaSoma`** — teste básico com `[Fact]`
-- **`Somar_ComZero_RetornaOutroNumero`** — testa caso de borda
-- **`Somar_Negativos_RetornaSomaNegativa`** — testa com negativos
-- **`Somar_VariosValores_RetornaResultadoCorreto`** — teste parametrizado com `[Theory]` e `[InlineData]`
+Os **demais métodos** (`Depositar`, `Sacar`, `Transferir`, `Encerrar`) ainda não estão implementados — lançam `NotImplementedException`. É você quem vai implementá-los usando TDD na Parte 2.
 
-### 1.2 Executar os testes existentes
+### 1.2 Analisar os testes do construtor
 
-No terminal:
+Abra `tests/ContaBancaria.Tests/ContaTests.cs` e analise os testes prontos para o **Construtor**:
+
+- **`Construtor_DadosValidos_CriaContaCorretamente`** — teste básico com `[Fact]` que verifica titular, saldo e status ativo.
+- **`Construtor_SemSaldoInicial_CriaContaComSaldoZero`** — testa o valor padrão do saldo.
+- **`Construtor_TitularNulo_LancaArgumentException`** — testa cenário de exceção.
+- **`Construtor_TitularVazio_LancaArgumentException`** — outro cenário de exceção.
+- **`Construtor_SaldoNegativo_LancaArgumentException`** — valida regra de negócio.
+- **`Construtor_VariosValoresValidos_CriaContaCorretamente`** — teste parametrizado com `[Theory]` e `[InlineData]`.
+
+### 1.3 Executar os testes do construtor
+
+No terminal, execute:
 
 ```bash
-dotnet test tests/Calculadora.Tests --filter "Somar"
+dotnet test tests/ContaBancaria.Tests --filter "Construtor"
 ```
 
-Ou pelo Test Explorer, expanda **Calculadora.Tests → CalculadoraServiceTests** e clique ▶️ nos testes de `Somar`.
+Ou pelo Test Explorer, expanda **ContaBancaria.Tests → ContaTests** e clique ▶️ nos testes de `Construtor`.
 
-✅ Todos os testes de `Somar` devem passar (verde).  
-❌ Os demais testes devem falhar (vermelho) — pois ainda não foram implementados.
+✅ Todos os testes do construtor devem **passar** (verde).
 
-### 1.3 Pontos a observar
+### 1.4 Pontos a observar
 
-- O construtor da classe de teste cria a instância compartilhada (`_calc`).
-- `[Fact]` é usado para testes com valores fixos.
-- `[Theory]` + `[InlineData]` permite executar o mesmo teste com valores diferentes.
-- Os nomes dos testes seguem o padrão `Método_Cenário_ResultadoEsperado`.
+Analise atentamente os testes do construtor e observe:
+
+- **Padrão AAA:** cada teste segue a estrutura Arrange → Act → Assert.
+- **`[Fact]`** é usado para testes com valores fixos (sem parâmetros).
+- **`[Theory]` + `[InlineData]`** permite executar o mesmo teste com valores diferentes.
+- **`Assert.Throws<T>`** verifica que uma exceção específica é lançada.
+- **Nomenclatura:** os nomes dos testes seguem `Método_Cenário_ResultadoEsperado`.
+- **Cobertura:** há testes para o caminho feliz, cenários de exceção e casos de borda.
+
+### 1.5 Entendendo o ciclo TDD aplicado ao construtor
+
+Vamos recapitular como o construtor foi implementado seguindo TDD:
+
+#### 🔴 RED — O teste foi escrito primeiro
+
+```csharp
+[Fact]
+public void Construtor_DadosValidos_CriaContaCorretamente()
+{
+    var conta = new Conta("Maria", 100);
+
+    Assert.Equal("Maria", conta.Titular);
+    Assert.Equal(100, conta.Saldo);
+    Assert.True(conta.Ativa);
+}
+```
+
+Com o construtor lançando `NotImplementedException`, este teste **falhava**.
+
+#### 🟢 GREEN — O código mínimo foi implementado
+
+```csharp
+public Conta(string titular, decimal saldoInicial = 0)
+{
+    if (string.IsNullOrWhiteSpace(titular))
+        throw new ArgumentException("O titular não pode ser nulo ou vazio.", nameof(titular));
+    if (saldoInicial < 0)
+        throw new ArgumentException("O saldo inicial não pode ser negativo.", nameof(saldoInicial));
+
+    Titular = titular;
+    Saldo = saldoInicial;
+    Ativa = true;
+}
+```
+
+Após implementar, o teste **passou**.
+
+#### 🔵 REFACTOR — O código já está limpo
+
+Neste caso, não há necessidade de refatoração. Em métodos mais complexos, esta é a hora de eliminar duplicação e melhorar nomes.
 
 ---
 
-## 🔴 Parte 2 — Prática TDD: Calculadora
+## 🏦 Parte 2 — Exercício: Crie os Demais Testes
 
-> **Objetivo:** Praticar o ciclo Red → Green → Refactor.
+> **Objetivo:** Praticar TDD do zero, escrevendo testes e implementando os métodos restantes da classe `Conta`.
 
-Para cada método (`Subtrair`, `Multiplicar`, `Dividir`, `EhPar`, `Fatorial`), siga **rigorosamente** o ciclo abaixo.
-
-### Ciclo TDD para cada método
-
-#### Etapa 🔴 RED — Escrever o teste
-
-1. Abra `tests/Calculadora.Tests/CalculadoraServiceTests.cs`.
-2. Encontre o teste correspondente (ex: `Subtrair_DoisPositivos_RetornaDiferenca`).
-3. **Substitua** o `throw new NotImplementedException(...)` pelo código do teste real.
-
-**Exemplo para `Subtrair`:**
-
-```csharp
-[Fact]
-public void Subtrair_DoisPositivos_RetornaDiferenca()
-{
-    // Act
-    var resultado = _calc.Subtrair(10, 3);
-
-    // Assert
-    Assert.Equal(7, resultado);
-}
-```
-
-4. Execute o teste e confirme que ele **falha** (🔴).
-
-```bash
-dotnet test tests/Calculadora.Tests --filter "Subtrair_DoisPositivos"
-```
-
-#### Etapa 🟢 GREEN — Implementar o código
-
-5. Abra `src/Calculadora/CalculadoraService.cs`.
-6. Implemente o método `Subtrair` com o **código mínimo**:
-
-```csharp
-public int Subtrair(int a, int b)
-{
-    return a - b;
-}
-```
-
-7. Execute o teste novamente e confirme que ele **passa** (🟢).
-
-#### Etapa 🔵 REFACTOR — Melhorar
-
-8. Há algo para melhorar? Neste caso, o código já está limpo. Em métodos mais complexos, esta é a hora de eliminar duplicação e melhorar nomes.
-
-9. **Repita** para os demais testes do mesmo método e para os outros métodos.
-
-### Dicas para os métodos mais complexos
-
-**`Dividir`** — Para testar exceções, use:
-
-```csharp
-[Fact]
-public void Dividir_PorZero_LancaExcecao()
-{
-    Assert.Throws<DivideByZeroException>(() => _calc.Dividir(10, 0));
-}
-```
-
-**`Fatorial`** — Para testar exceções com mensagem:
-
-```csharp
-[Fact]
-public void Fatorial_Negativo_LancaArgumentException()
-{
-    Assert.Throws<ArgumentException>(() => _calc.Fatorial(-1));
-}
-```
-
----
-
-## 🏦 Parte 3 — Exercício Autônomo: Conta Bancária
-
-> **Objetivo:** Aplicar TDD do zero em um cenário mais realista.
-
-Neste exercício, você vai praticar TDD de forma autônoma com a classe `Conta` (conta bancária).
+Agora é a sua vez! Usando como modelo os testes do construtor, você deve aplicar o ciclo TDD para cada um dos métodos abaixo.
 
 ### Requisitos
 
@@ -369,7 +338,6 @@ Abra o arquivo `src/ContaBancaria/Conta.cs` e leia a documentação de cada mét
 
 | Método | Regras |
 |---|---|
-| **Construtor** | Titular obrigatório, saldo ≥ 0, conta ativa |
 | **Depositar** | Valor > 0, conta ativa |
 | **Sacar** | Valor > 0, conta ativa, saldo suficiente |
 | **Transferir** | Ambas ativas, valor > 0, saldo suficiente |
@@ -378,42 +346,80 @@ Abra o arquivo `src/ContaBancaria/Conta.cs` e leia a documentação de cada mét
 ### Instruções
 
 1. Abra `tests/ContaBancaria.Tests/ContaTests.cs`.
-2. Leia as **sugestões de testes** nos comentários.
+2. Leia as **sugestões de testes** nos comentários de cada seção.
 3. Para **cada método**, siga o ciclo TDD:
    - 🔴 Escreva **um** teste → execute → veja falhar.
    - 🟢 Implemente o código mínimo em `Conta.cs` → execute → veja passar.
    - 🔵 Refatore se necessário.
    - Repita para o próximo cenário de teste.
 
-### Exemplo de início — Teste do construtor
+### Exemplo de como começar — Teste do Depositar
+
+Siga o mesmo padrão dos testes do construtor:
 
 ```csharp
 [Fact]
-public void Construtor_DadosValidos_CriaContaCorretamente()
+public void Depositar_ValorValido_AtualizaSaldo()
 {
-    // Arrange & Act
+    // Arrange
     var conta = new Conta("Maria", 100);
 
-    // Assert
-    Assert.Equal("Maria", conta.Titular);
-    Assert.Equal(100, conta.Saldo);
-    Assert.True(conta.Ativa);
-}
+    // Act
+    conta.Depositar(50);
 
-[Fact]
-public void Construtor_TitularNulo_LancaArgumentException()
-{
-    Assert.Throws<ArgumentException>(() => new Conta(null!));
+    // Assert
+    Assert.Equal(150, conta.Saldo);
 }
+```
+
+1. Escreva este teste e **execute** → ele vai **falhar** (🔴) porque `Depositar` lança `NotImplementedException`.
+2. Vá até `Conta.cs` e implemente o código mínimo de `Depositar` → execute → veja **passar** (🟢).
+3. Refatore se necessário (🔵).
+4. Escreva o próximo teste (ex: `Depositar_ValorZero_LancaArgumentException`) e repita o ciclo.
+
+### Dicas
+
+**Para testar exceções**, use `Assert.Throws<T>`:
+
+```csharp
+[Fact]
+public void Depositar_ValorNegativo_LancaArgumentException()
+{
+    var conta = new Conta("Maria", 100);
+    Assert.Throws<ArgumentException>(() => conta.Depositar(-10));
+}
+```
+
+**Para testar conta inativa**, você precisa primeiro encerrar a conta (o que requer implementar `Encerrar` antes). Planeje a ordem de implementação!
+
+**Para testar `Transferir`**, crie duas contas e verifique os saldos de ambas:
+
+```csharp
+[Fact]
+public void Transferir_ValorValido_AtualizaSaldoDeAmbasContas()
+{
+    var origem = new Conta("Maria", 200);
+    var destino = new Conta("João", 100);
+
+    origem.Transferir(destino, 50);
+
+    Assert.Equal(150, origem.Saldo);
+    Assert.Equal(150, destino.Saldo);
+}
+```
+
+### Executar testes
+
+```bash
+# Todos os testes
+dotnet test tests/ContaBancaria.Tests
+
+# Filtrar por método
+dotnet test tests/ContaBancaria.Tests --filter "Depositar"
+dotnet test tests/ContaBancaria.Tests --filter "Sacar"
 ```
 
 > ⚠️ **Mínimo exigido:** Crie pelo menos **15 testes** cobrindo todos os métodos da classe `Conta`.
-
-### Executar testes do projeto ContaBancaria
-
-```bash
-dotnet test tests/ContaBancaria.Tests
-```
 
 ---
 
@@ -463,14 +469,11 @@ Assert.InRange(resultado, minimo, maximo);
 # Todos os testes
 dotnet test
 
-# Projeto específico
-dotnet test tests/Calculadora.Tests
-
 # Filtrar por nome
 dotnet test --filter "NomeDoTeste"
 
 # Filtrar por classe
-dotnet test --filter "FullyQualifiedName~CalculadoraServiceTests"
+dotnet test --filter "FullyQualifiedName~ContaTests"
 
 # Com detalhes
 dotnet test --verbosity normal
@@ -489,12 +492,10 @@ Para comprovar a realização da atividade, você deve entregar as seguintes evi
 
 | # | Entregável | Descrição | Arquivo |
 |---|---|---|---|
-| 1 | **Testes da Calculadora** | Todos os testes em `CalculadoraServiceTests.cs` implementados (sem `NotImplementedException`) | `tests/Calculadora.Tests/CalculadoraServiceTests.cs` |
-| 2 | **Código da Calculadora** | Todos os métodos de `CalculadoraService.cs` implementados (sem `NotImplementedException`) | `src/Calculadora/CalculadoraService.cs` |
-| 3 | **Testes da Conta Bancária** | Mínimo de **15 testes** escritos do zero em `ContaTests.cs` | `tests/ContaBancaria.Tests/ContaTests.cs` |
-| 4 | **Código da Conta Bancária** | Classe `Conta.cs` totalmente implementada | `src/ContaBancaria/Conta.cs` |
-| 5 | **Todos os testes passando** | Screenshot ou saída do terminal mostrando `dotnet test` com todos os testes passando | Incluir no commit |
-| 6 | **Histórico de commits** | Commits **incrementais** mostrando o ciclo TDD (ex: "red: teste Subtrair", "green: implementa Subtrair") | Histórico do Git |
+| 1 | **Testes da Conta Bancária** | Mínimo de **15 testes** cobrindo todos os métodos | `tests/ContaBancaria.Tests/ContaTests.cs` |
+| 2 | **Código da Conta Bancária** | Classe `Conta.cs` totalmente implementada (sem `NotImplementedException`) | `src/ContaBancaria/Conta.cs` |
+| 3 | **Todos os testes passando** | Screenshot ou saída do terminal mostrando `dotnet test` com todos os testes passando | Incluir no commit |
+| 4 | **Histórico de commits** | Commits **incrementais** mostrando o ciclo TDD (ex: "red: teste Depositar", "green: implementa Depositar") | Histórico do Git |
 
 ### 📸 Screenshot dos testes
 
@@ -511,12 +512,12 @@ Faça o commit do arquivo `resultado-testes.txt` junto com seu código.
 Use prefixos para documentar o ciclo TDD nos commits:
 
 ```
-red:      teste para Subtrair - dois positivos
-green:    implementa Subtrair
-refactor: simplifica lógica do Subtrair
+red:      teste para Depositar - valor válido
+green:    implementa Depositar
+refactor: simplifica validação do Depositar
 
-red:      teste para Dividir por zero  
-green:    implementa Dividir com validação
+red:      teste para Sacar - saldo insuficiente
+green:    implementa Sacar com validação
 refactor: extrai validação para método privado
 ```
 

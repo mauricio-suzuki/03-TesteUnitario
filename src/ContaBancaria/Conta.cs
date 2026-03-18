@@ -1,11 +1,11 @@
 namespace ContaBancaria;
 
 /// <summary>
-/// Classe ContaBancaria — exercício autônomo de TDD.
+/// Classe Conta Bancária — laboratório de Testes Unitários e TDD.
 /// 
 /// INSTRUÇÕES:
 ///   1. Leia os requisitos de cada método (summary + regras).
-///   2. Escreva os testes PRIMEIRO no arquivo ContaBancariaTests.cs.
+///   2. Escreva os testes PRIMEIRO no arquivo ContaTests.cs.
 ///   3. Execute os testes e veja-os FALHAR (Red).
 ///   4. Implemente o código mínimo para os testes PASSAREM (Green).
 ///   5. Refatore se necessário (Refactor).
@@ -25,8 +25,14 @@ public class Conta
     /// </summary>
     public Conta(string titular, decimal saldoInicial = 0)
     {
-        // TODO: Implemente usando TDD
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(titular))
+            throw new ArgumentException("O titular não pode ser nulo ou vazio.", nameof(titular));
+        if (saldoInicial < 0)
+            throw new ArgumentException("O saldo inicial não pode ser negativo.", nameof(saldoInicial));
+
+        Titular = titular;
+        Saldo = saldoInicial;
+        Ativa = true;
     }
 
     /// <summary>
